@@ -46,6 +46,8 @@ public class ThrallPreviewPlugin extends Plugin
 	private int height;
 	private RenderStyle style;
 	private PreviewObject object;
+	private final ModelCache<Model> models = new ModelCache<>(1);
+	private String resource;
 
 	@Provides
 	ThrallPreviewConfig provideConfig(ConfigManager manager)
@@ -74,6 +76,7 @@ public class ThrallPreviewPlugin extends Plugin
 			}
 			removeObject();
 			asset = null;
+			models.clear();
 		});
 	}
 
@@ -90,10 +93,12 @@ public class ThrallPreviewPlugin extends Plugin
 		}
 		removeObject();
 		asset = null;
+		models.clear();
 		height = config.height();
 		style = config.style();
-		String resource = config.character().getModelResource(style);
-		if (resource == null)
+		resource = config.character().getModelResource(style);
+		String requestedResource = resource;
+		if (requestedResource == null)
 		{
 			return;
 		}
@@ -101,7 +106,7 @@ public class ThrallPreviewPlugin extends Plugin
 		{
 			try
 			{
-				BlenderModel loaded = modelResources.load(resource);
+				BlenderModel loaded = modelResources.load(requestedResource);
 				clientThread.invoke(() ->
 				{
 					if (enabled && generation == requestedGeneration)
@@ -113,7 +118,7 @@ public class ThrallPreviewPlugin extends Plugin
 			}
 			catch (IOException | JsonParseException e)
 			{
-				log.warn("Could not load preview model {}", resource, e);
+				log.warn("Could not load preview model {}", requestedResource, e);
 			}
 		});
 	}
@@ -151,7 +156,7 @@ public class ThrallPreviewPlugin extends Plugin
 		{
 			return;
 		}
-		Model model = modelLoader.build(asset, height);
+		Model model = models.getOrBuild(resource, height, () -> modelLoader.build(asset, height));
 		if (model != null)
 		{
 			object = new PreviewObject(model, style, CustomModelLoader.scaleFor(asset, height));

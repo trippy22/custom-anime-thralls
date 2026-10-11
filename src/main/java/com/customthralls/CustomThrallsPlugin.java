@@ -51,6 +51,7 @@ public class CustomThrallsPlugin extends Plugin
 	// Client-thread-owned maps. Only the selected assets are kept in memory.
 	private final Map<String, BlenderModel> assets = new HashMap<>();
 	private final Map<NPC, ThrallReplacement> replacements = new HashMap<>();
+	private final ModelCache<Model> models = new ModelCache<>(3);
 	private final CacheRetryQueue<NPC> pendingReplacements = new CacheRetryQueue<>(
 		() -> modelLoader.isCacheReady(), this::createReplacement);
 	private volatile boolean enabled;
@@ -95,6 +96,7 @@ public class CustomThrallsPlugin extends Plugin
 			}
 			removeAllReplacements();
 			assets.clear();
+			models.clear();
 		});
 	}
 
@@ -131,6 +133,7 @@ public class CustomThrallsPlugin extends Plugin
 		}
 		removeAllReplacements();
 		assets.clear();
+		models.clear();
 		Set<String> requested = new HashSet<>();
 		for (ThrallKind kind : ThrallKind.values())
 		{
@@ -175,8 +178,18 @@ public class CustomThrallsPlugin extends Plugin
 		if (CustomThrallsConfig.GROUP.equals(event.getGroup()) && !"animate".equals(event.getKey()))
 		{
 			// Height changes only rebuild geometry; the selected JSON assets are unchanged.
-			clientThread.invoke("modelHeight".equals(event.getKey())
-				? this::refreshReplacements : this::reloadAssets);
+			clientThread.invoke(() ->
+			{
+				if ("modelHeight".equals(event.getKey()))
+				{
+					models.clear();
+					refreshReplacements();
+				}
+				else
+				{
+					reloadAssets();
+				}
+			});
 		}
 	}
 
@@ -259,7 +272,15 @@ public class CustomThrallsPlugin extends Plugin
 		if (enabled && kind != null && !replacements.containsKey(npc)
 			&& assets.containsKey(characterFor(kind).getModelResource(styleFor(kind))))
 		{
-			pendingReplacements.submit(npc);
+			String resource = characterFor(kind).getModelResource(styleFor(kind));
+			if (models.get(resource, config.modelHeight()) != null)
+			{
+				createReplacement(npc);
+			}
+			else
+			{
+				pendingReplacements.submit(npc);
+			}
 		}
 	}
 
@@ -271,12 +292,14 @@ public class CustomThrallsPlugin extends Plugin
 			return;
 		}
 		RenderStyle style = styleFor(kind);
-		BlenderModel asset = assets.get(characterFor(kind).getModelResource(style));
+		String resource = characterFor(kind).getModelResource(style);
+		BlenderModel asset = assets.get(resource);
 		if (asset == null)
 		{
 			return;
 		}
-		Model model = modelLoader.build(asset, config.modelHeight());
+		int height = config.modelHeight();
+		Model model = models.getOrBuild(resource, height, () -> modelLoader.build(asset, height));
 		if (model == null)
 		{
 			return;

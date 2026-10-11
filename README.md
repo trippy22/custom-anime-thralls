@@ -32,4 +32,8 @@ idle/walk/attack motion. Actual NPC replacement requires a visible thrall in-gam
 the preview alone does not validate that behavior.
 The preview is development-only and is excluded from the regular plugin JAR.
 
+Completed models are cached by resource and height (at most three in the live plugin).
+Character/style/height changes and shutdown clear the cache; position and motion remain
+independent per thrall.
+
 Licensed under [BSD 2-Clause](LICENSE). Reused code is credited in [NOTICE](NOTICE).

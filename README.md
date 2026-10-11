@@ -11,6 +11,11 @@ use rounded, faceted geometry and adjusted humanoid proportions for every charac
 depth and rear colors are inferred from the front artwork. These are procedural models
 with bob/hop motion, without articulated animation. **Original game thrall** disables replacement.
 
+Bundled mesh JSON uses `geometryEncoding: "delta-v1"`: each vertex coordinate and
+triangle index is stored as a difference from the preceding row in the same column,
+starting at zero. The resource reader restores the exact geometry off the client thread.
+This reduces archive size without changing model detail or requiring extra libraries.
+
 Built for the RuneLite Plugin Hub; availability requires upstream approval.
 Use Java 11+ and `./gradlew run` to launch the development client. `CustomThrallsPluginTest`
 is its manual launcher, not an automated test. `./gradlew test` runs any locally present

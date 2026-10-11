@@ -1,0 +1,15 @@
+Custom Anime Thralls
+
+Model construction and thrall replacement code is derived from Anime Girl Thralls,
+Copyright (c) 2026, jb1361, under the BSD 2-Clause License. Its original character
+models and animation assets are not included in this plugin.
+
+Modifications and new code: Copyright (c) 2026, trippy22.
+See LICENSE for the BSD 2-Clause terms.
+
+The custom geometry construction approach is credited upstream to creators-kit:
+https://github.com/ScreteMonge/creators-kit
+
+The BSD license does not grant rights in third-party characters or third-party
+artwork. Source artwork provenance and redistribution permissions must be established
+by the contributor before public distribution.

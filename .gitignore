@@ -1,0 +1,17 @@
+hints/
+.gradle/
+build/
+.idea/
+out/
+*.iml
+*.class
+__pycache__/
+*.pyc
+.venv/
+assets/
+.run/
+tools/
+preview/
+/src/test/**
+!/src/test/**/
+!/src/test/java/com/customthralls/CustomThrallsPluginTest.java

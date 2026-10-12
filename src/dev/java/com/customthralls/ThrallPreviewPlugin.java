@@ -1,6 +1,7 @@
 package com.customthralls;
 
 import com.google.inject.Provides;
+import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -25,14 +26,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Development-only cosmetic object, compiled with the launcher and excluded from the release JAR. */
-@PluginDescriptor(name = "Custom Thralls Preview", description = "Development preview beside your player",
+@PluginDescriptor(name = "Custom Thralls Preview", internalName = "custom-thralls-preview",
+	description = "Development preview beside your player",
 	developerPlugin = true, enabledByDefault = true)
 public class ThrallPreviewPlugin extends Plugin
 {
 	private static final Logger log = LoggerFactory.getLogger(ThrallPreviewPlugin.class);
 	@Inject private Client client;
 	@Inject private ClientThread clientThread;
-	@Inject private BundledModelResources modelResources;
+	@Inject private ModelRepository modelRepository;
 	@Inject private ScheduledExecutorService executor;
 	@Inject private CustomModelLoader modelLoader;
 	@Inject private ThrallPreviewConfig config;
@@ -94,7 +96,7 @@ public class ThrallPreviewPlugin extends Plugin
 		models.clear();
 		height = config.height();
 		style = config.style();
-		resource = config.character().getModelResource(style);
+		resource = config.character().getModelFileName(style);
 		String requestedResource = resource;
 		if (requestedResource == null)
 		{
@@ -104,7 +106,7 @@ public class ThrallPreviewPlugin extends Plugin
 		{
 			try
 			{
-				BlenderModel loaded = modelResources.loadBundledModel(requestedResource);
+				BlenderModel loaded = modelRepository.load(getPluginDirectory(), requestedResource);
 				clientThread.invoke(() ->
 				{
 					if (enabled && generation == requestedGeneration)
@@ -114,9 +116,12 @@ public class ThrallPreviewPlugin extends Plugin
 					}
 				});
 			}
-			catch (ModelResourceException e)
+			catch (IOException | ModelResourceException e)
 			{
-				log.warn("Could not load preview model {}", requestedResource, e);
+				if (!Thread.currentThread().isInterrupted())
+				{
+					log.warn("Could not load preview model {}", requestedResource, e);
+				}
 			}
 		});
 	}

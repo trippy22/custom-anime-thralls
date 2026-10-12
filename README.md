@@ -16,6 +16,11 @@ Settings apply to visible thralls, including other players' summons. The plugin 
 existing thralls; it does not summon them or unlock the spells. Motion uses bobbing and
 hopping rather than moving arms and legs.
 
+On first use, the plugin downloads all character models from this project's GitHub
+Releases and caches them locally. Cached models work offline; a new model release needs another download.
+If the initial download fails, original thralls remain visible. Check your connection,
+wait a minute, and toggle the plugin to retry.
+
 ## Development
 
 With Java 11+, run `./gradlew run` to launch RuneLite with the plugin.

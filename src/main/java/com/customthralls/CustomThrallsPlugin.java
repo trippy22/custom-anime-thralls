@@ -1,6 +1,7 @@
 package com.customthralls;
 
 import com.google.inject.Provides;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class CustomThrallsPlugin extends Plugin
 	@Inject private Client client;
 	@Inject private ClientThread clientThread;
 	@Inject private RenderCallbackManager renderCallbackManager;
-	@Inject private BundledModelResources modelResources;
+	@Inject private ModelRepository modelRepository;
 	@Inject private ScheduledExecutorService executor;
 	@Inject private CustomThrallsConfig config;
 	@Inject private CustomModelLoader modelLoader;
@@ -135,7 +136,7 @@ public class CustomThrallsPlugin extends Plugin
 		Set<String> requested = new HashSet<>();
 		for (ThrallKind kind : ThrallKind.values())
 		{
-			String resource = characterFor(kind).getModelResource(styleFor(kind));
+			String resource = characterFor(kind).getModelFileName(styleFor(kind));
 			if (resource != null)
 			{
 				requested.add(resource);
@@ -144,20 +145,25 @@ public class CustomThrallsPlugin extends Plugin
 		loadFuture = executor.submit(() ->
 		{
 			Map<String, BlenderModel> loaded = new HashMap<>();
-			for (String resource : requested)
+			if (requested.isEmpty())
 			{
-				if (Thread.currentThread().isInterrupted())
+				return;
+			}
+			try
+			{
+				var directory = getPluginDirectory();
+				for (String resource : requested)
 				{
-					return;
+					loaded.put(resource, modelRepository.load(directory, resource));
 				}
-				try
+			}
+			catch (IOException | ModelResourceException e)
+			{
+				if (!Thread.currentThread().isInterrupted())
 				{
-					loaded.put(resource, modelResources.loadBundledModel(resource));
+					log.warn("Could not load character models; keeping original thralls", e);
 				}
-				catch (ModelResourceException e)
-				{
-					log.warn("Could not load bundled model {}", resource, e);
-				}
+				return;
 			}
 			clientThread.invoke(() ->
 			{
@@ -268,9 +274,9 @@ public class CustomThrallsPlugin extends Plugin
 	{
 		ThrallKind kind = ThrallKind.forNpc(npc.getId());
 		if (enabled && kind != null && !replacements.containsKey(npc)
-			&& assets.containsKey(characterFor(kind).getModelResource(styleFor(kind))))
+			&& assets.containsKey(characterFor(kind).getModelFileName(styleFor(kind))))
 		{
-			String resource = characterFor(kind).getModelResource(styleFor(kind));
+			String resource = characterFor(kind).getModelFileName(styleFor(kind));
 			if (models.get(resource, config.modelHeight()) != null)
 			{
 				createReplacement(npc);
@@ -290,7 +296,7 @@ public class CustomThrallsPlugin extends Plugin
 			return;
 		}
 		RenderStyle style = styleFor(kind);
-		String resource = characterFor(kind).getModelResource(style);
+		String resource = characterFor(kind).getModelFileName(style);
 		BlenderModel asset = assets.get(resource);
 		if (asset == null)
 		{

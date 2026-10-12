@@ -175,9 +175,9 @@ public enum ThrallCharacter
 
 	private final String resourceName;
 
-	String getModelResource(RenderStyle style)
+	String getModelFileName(RenderStyle style)
 	{
-		return resourceName == null ? null : "pixels/" + resourceName
+		return resourceName == null ? null : resourceName
 			+ "_" + style.getResourceSuffix() + ".json";
 	}
 

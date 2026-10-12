@@ -1,6 +1,6 @@
 package com.customthralls;
 
-/** A bundled model could not be found, read, parsed, or decoded. */
+/** Model downloading, cache access, integrity validation, or decoding failed. */
 final class ModelResourceException extends Exception
 {
 	ModelResourceException(String message)

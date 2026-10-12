@@ -1,8 +1,6 @@
 package com.customthralls;
 
-import com.google.gson.JsonParseException;
 import com.google.inject.Provides;
-import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -106,7 +104,7 @@ public class ThrallPreviewPlugin extends Plugin
 		{
 			try
 			{
-				BlenderModel loaded = modelResources.load(requestedResource);
+				BlenderModel loaded = modelResources.loadBundledModel(requestedResource);
 				clientThread.invoke(() ->
 				{
 					if (enabled && generation == requestedGeneration)
@@ -116,7 +114,7 @@ public class ThrallPreviewPlugin extends Plugin
 					}
 				});
 			}
-			catch (IOException | JsonParseException e)
+			catch (ModelResourceException e)
 			{
 				log.warn("Could not load preview model {}", requestedResource, e);
 			}

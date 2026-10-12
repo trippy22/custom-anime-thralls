@@ -1,8 +1,6 @@
 package com.customthralls;
 
-import com.google.gson.JsonParseException;
 import com.google.inject.Provides;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -154,9 +152,9 @@ public class CustomThrallsPlugin extends Plugin
 				}
 				try
 				{
-					loaded.put(resource, modelResources.load(resource));
+					loaded.put(resource, modelResources.loadBundledModel(resource));
 				}
-				catch (IOException | JsonParseException e)
+				catch (ModelResourceException e)
 				{
 					log.warn("Could not load bundled model {}", resource, e);
 				}

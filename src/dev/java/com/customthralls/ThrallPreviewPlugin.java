@@ -32,7 +32,7 @@ public class ThrallPreviewPlugin extends Plugin
 	private static final Logger log = LoggerFactory.getLogger(ThrallPreviewPlugin.class);
 	@Inject private Client client;
 	@Inject private ClientThread clientThread;
-	@Inject private BundledModelResources modelResources;
+	@Inject private BundledModels bundledModels;
 	@Inject private ScheduledExecutorService executor;
 	@Inject private CustomModelLoader modelLoader;
 	@Inject private ThrallPreviewConfig config;
@@ -40,12 +40,12 @@ public class ThrallPreviewPlugin extends Plugin
 	private volatile boolean enabled;
 	private int generation;
 	private Future<?> loadFuture;
-	private BlenderModel asset;
+	private ModelMesh asset;
 	private int height;
 	private RenderStyle style;
 	private PreviewObject object;
 	private final ModelCache<Model> models = new ModelCache<>(1);
-	private String resource;
+	private String modelId;
 
 	@Provides
 	ThrallPreviewConfig provideConfig(ConfigManager manager)
@@ -94,9 +94,9 @@ public class ThrallPreviewPlugin extends Plugin
 		models.clear();
 		height = config.height();
 		style = config.style();
-		resource = config.character().getModelResource(style);
-		String requestedResource = resource;
-		if (requestedResource == null)
+		modelId = config.character().getModelId(style);
+		String requestedModelId = modelId;
+		if (requestedModelId == null)
 		{
 			return;
 		}
@@ -104,7 +104,7 @@ public class ThrallPreviewPlugin extends Plugin
 		{
 			try
 			{
-				BlenderModel loaded = modelResources.loadBundledModel(requestedResource);
+				ModelMesh loaded = bundledModels.load(requestedModelId);
 				clientThread.invoke(() ->
 				{
 					if (enabled && generation == requestedGeneration)
@@ -114,9 +114,9 @@ public class ThrallPreviewPlugin extends Plugin
 					}
 				});
 			}
-			catch (ModelResourceException e)
+			catch (ModelDataException e)
 			{
-				log.warn("Could not load preview model {}", requestedResource, e);
+				log.warn("Could not load preview model {}", requestedModelId, e);
 			}
 		});
 	}
@@ -142,7 +142,7 @@ public class ThrallPreviewPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		// Cache building blocks may arrive after the selected JSON. Retry at most once per game tick.
+		// Cache building blocks may arrive after the selected mesh data. Retry at most once per game tick.
 		ensureObject();
 	}
 
@@ -154,7 +154,7 @@ public class ThrallPreviewPlugin extends Plugin
 		{
 			return;
 		}
-		Model model = models.getOrBuild(resource, height, () -> modelLoader.build(asset, height));
+		Model model = models.getOrBuild(modelId, height, () -> modelLoader.build(asset, height));
 		if (model != null)
 		{
 			object = new PreviewObject(model, style, CustomModelLoader.scaleFor(asset, height));

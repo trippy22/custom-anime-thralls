@@ -12,7 +12,7 @@ import net.runelite.api.Model;
 import net.runelite.api.ModelData;
 
 /**
- * Builds a {@link Model} from a bundled {@link BlenderModel}.
+ * Builds a {@link Model} from a bundled {@link ModelMesh}.
  * <p>
  * The client API has no way to create a {@link ModelData} from scratch, so this follows the approach
  * used by creators-kit: merge copies of tiny cache models until the merged model has exactly the
@@ -58,9 +58,9 @@ class CustomModelLoader
 	}
 
 	/** Scale the exported mesh to the configured height. */
-	static float scaleFor(BlenderModel bm, int targetHeight)
+	static float scaleFor(ModelMesh mesh, int targetHeight)
 	{
-		int[][] vertices = bm.getVertices();
+		int[][] vertices = mesh.getVertices();
 		if (targetHeight <= 0 || vertices == null || vertices.length == 0)
 		{
 			return 1f;
@@ -79,13 +79,13 @@ class CustomModelLoader
 
 	/** Builds the mesh on the client thread, or returns null if it cannot be rendered. */
 	@Nullable
-	Model build(BlenderModel bm, int targetHeight)
+	Model build(ModelMesh mesh, int targetHeight)
 	{
-		int[][] vertices = bm.getVertices();
-		int[][] faces = bm.getFaces();
+		int[][] vertices = mesh.getVertices();
+		int[][] faces = mesh.getFaces();
 		if (vertices == null || faces == null || vertices.length < 3 || faces.length < 1)
 		{
-			log.warn("Blender model has no geometry");
+			log.warn("Model mesh has no geometry");
 			return null;
 		}
 
@@ -93,7 +93,7 @@ class CustomModelLoader
 		int faceCount = faces.length;
 		if (vertexCount > MAX_VERTICES || faceCount > MAX_FACES)
 		{
-			log.warn("Blender model has {} vertices and {} faces; the client only renders up to {} vertices and {} faces",
+			log.warn("Model mesh has {} vertices and {} faces; the client only renders up to {} vertices and {} faces",
 				vertexCount, faceCount, MAX_VERTICES, MAX_FACES);
 			return null;
 		}
@@ -119,7 +119,7 @@ class CustomModelLoader
 			return null;
 		}
 
-		float scale = scaleFor(bm, targetHeight);
+		float scale = scaleFor(mesh, targetHeight);
 
 		float[] vx = md.getVerticesX();
 		float[] vy = md.getVerticesY();
@@ -143,9 +143,9 @@ class CustomModelLoader
 			f3[i] = f[2];
 		}
 
-		if (!bm.isUseVertexColours())
+		if (!mesh.isUseVertexColours())
 		{
-			applyFaceColours(bm, md.getFaceColors(), md.getFaceTransparencies(), faceCount);
+			applyFaceColours(mesh, md.getFaceColors(), md.getFaceTransparencies(), faceCount);
 		}
 
 		Model model = md.light(AMBIENT, CONTRAST, LIGHT_X, LIGHT_Y, LIGHT_Z);
@@ -154,12 +154,12 @@ class CustomModelLoader
 			return null;
 		}
 
-		if (bm.isUseVertexColours())
+		if (mesh.isUseVertexColours())
 		{
-			applyVertexColours(bm, model);
+			applyVertexColours(mesh, model);
 		}
 
-		byte[] priorities = bm.getPriorities();
+		byte[] priorities = mesh.getPriorities();
 		byte[] facePriorities = model.getFaceRenderPriorities();
 		if (priorities != null && facePriorities != null)
 		{
@@ -292,10 +292,10 @@ class CustomModelLoader
 		return client.mergeModels(parts.toArray(new ModelData[0]));
 	}
 
-	private static void applyFaceColours(BlenderModel bm, short[] faceColors, byte[] faceTransparencies, int faceCount)
+	private static void applyFaceColours(ModelMesh mesh, short[] faceColors, byte[] faceTransparencies, int faceCount)
 	{
-		double[][] palette = bm.getFaceColours();
-		int[] index = bm.getFaceColourIndex();
+		double[][] palette = mesh.getFaceColours();
+		int[] index = mesh.getFaceColourIndex();
 		if (palette == null || index == null || faceColors == null)
 		{
 			return;
@@ -325,10 +325,10 @@ class CustomModelLoader
 		}
 	}
 
-	private static void applyVertexColours(BlenderModel bm, Model model)
+	private static void applyVertexColours(ModelMesh mesh, Model model)
 	{
-		double[][] palette = bm.getVertexColours();
-		int[] index = bm.getVertexColourIndex();
+		double[][] palette = mesh.getVertexColours();
+		int[] index = mesh.getVertexColourIndex();
 		if (palette == null || index == null)
 		{
 			return;

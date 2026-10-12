@@ -41,13 +41,13 @@ public class CustomThrallsPlugin extends Plugin
 	@Inject private Client client;
 	@Inject private ClientThread clientThread;
 	@Inject private RenderCallbackManager renderCallbackManager;
-	@Inject private BundledModelResources modelResources;
+	@Inject private BundledModels bundledModels;
 	@Inject private ScheduledExecutorService executor;
 	@Inject private CustomThrallsConfig config;
 	@Inject private CustomModelLoader modelLoader;
 
 	// Client-thread-owned maps. Only the selected assets are kept in memory.
-	private final Map<String, BlenderModel> assets = new HashMap<>();
+	private final Map<String, ModelMesh> assets = new HashMap<>();
 	private final Map<NPC, ThrallReplacement> replacements = new HashMap<>();
 	private final ModelCache<Model> models = new ModelCache<>(3);
 	private final CacheRetryQueue<NPC> pendingReplacements = new CacheRetryQueue<>(
@@ -135,16 +135,16 @@ public class CustomThrallsPlugin extends Plugin
 		Set<String> requested = new HashSet<>();
 		for (ThrallKind kind : ThrallKind.values())
 		{
-			String resource = characterFor(kind).getModelResource(styleFor(kind));
-			if (resource != null)
+			String modelId = characterFor(kind).getModelId(styleFor(kind));
+			if (modelId != null)
 			{
-				requested.add(resource);
+				requested.add(modelId);
 			}
 		}
 		loadFuture = executor.submit(() ->
 		{
-			Map<String, BlenderModel> loaded = new HashMap<>();
-			for (String resource : requested)
+			Map<String, ModelMesh> loaded = new HashMap<>();
+			for (String modelId : requested)
 			{
 				if (Thread.currentThread().isInterrupted())
 				{
@@ -152,11 +152,11 @@ public class CustomThrallsPlugin extends Plugin
 				}
 				try
 				{
-					loaded.put(resource, modelResources.loadBundledModel(resource));
+					loaded.put(modelId, bundledModels.load(modelId));
 				}
-				catch (ModelResourceException e)
+				catch (ModelDataException e)
 				{
-					log.warn("Could not load bundled model {}", resource, e);
+					log.warn("Could not load bundled model {}", modelId, e);
 				}
 			}
 			clientThread.invoke(() ->
@@ -175,7 +175,7 @@ public class CustomThrallsPlugin extends Plugin
 	{
 		if (CustomThrallsConfig.GROUP.equals(event.getGroup()) && !"animate".equals(event.getKey()))
 		{
-			// Height changes only rebuild geometry; the selected JSON assets are unchanged.
+			// Height changes only rebuild geometry; the selected mesh data are unchanged.
 			clientThread.invoke(() ->
 			{
 				if ("modelHeight".equals(event.getKey()))
@@ -268,10 +268,10 @@ public class CustomThrallsPlugin extends Plugin
 	{
 		ThrallKind kind = ThrallKind.forNpc(npc.getId());
 		if (enabled && kind != null && !replacements.containsKey(npc)
-			&& assets.containsKey(characterFor(kind).getModelResource(styleFor(kind))))
+			&& assets.containsKey(characterFor(kind).getModelId(styleFor(kind))))
 		{
-			String resource = characterFor(kind).getModelResource(styleFor(kind));
-			if (models.get(resource, config.modelHeight()) != null)
+			String modelId = characterFor(kind).getModelId(styleFor(kind));
+			if (models.get(modelId, config.modelHeight()) != null)
 			{
 				createReplacement(npc);
 			}
@@ -290,14 +290,14 @@ public class CustomThrallsPlugin extends Plugin
 			return;
 		}
 		RenderStyle style = styleFor(kind);
-		String resource = characterFor(kind).getModelResource(style);
-		BlenderModel asset = assets.get(resource);
+		String modelId = characterFor(kind).getModelId(style);
+		ModelMesh asset = assets.get(modelId);
 		if (asset == null)
 		{
 			return;
 		}
 		int height = config.modelHeight();
-		Model model = models.getOrBuild(resource, height, () -> modelLoader.build(asset, height));
+		Model model = models.getOrBuild(modelId, height, () -> modelLoader.build(asset, height));
 		if (model == null)
 		{
 			return;

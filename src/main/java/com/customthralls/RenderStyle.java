@@ -8,17 +8,17 @@ public enum RenderStyle
 	OSRS_MODEL("OSRS-style model", "osrs");
 
 	private final String label;
-	private final String resourceSuffix;
+	private final String modelSuffix;
 
-	RenderStyle(String label, String resourceSuffix)
+	RenderStyle(String label, String modelSuffix)
 	{
 		this.label = label;
-		this.resourceSuffix = resourceSuffix;
+		this.modelSuffix = modelSuffix;
 	}
 
-	String getResourceSuffix()
+	String getModelSuffix()
 	{
-		return resourceSuffix;
+		return modelSuffix;
 	}
 
 	@Override

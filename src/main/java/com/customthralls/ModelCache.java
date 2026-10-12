@@ -19,14 +19,14 @@ final class ModelCache<T>
 		this.capacity = capacity;
 	}
 
-	T get(String resource, int height)
+	T get(String modelId, int height)
 	{
-		return entries.get(new Key(resource, height));
+		return entries.get(new Key(modelId, height));
 	}
 
-	T getOrBuild(String resource, int height, Supplier<T> builder)
+	T getOrBuild(String modelId, int height, Supplier<T> builder)
 	{
-		Key key = new Key(resource, height);
+		Key key = new Key(modelId, height);
 		T model = entries.get(key);
 		if (model != null)
 		{
@@ -51,12 +51,12 @@ final class ModelCache<T>
 
 	private static final class Key
 	{
-		private final String resource;
+		private final String modelId;
 		private final int height;
 
-		private Key(String resource, int height)
+		private Key(String modelId, int height)
 		{
-			this.resource = resource;
+			this.modelId = modelId;
 			this.height = height;
 		}
 
@@ -68,13 +68,13 @@ final class ModelCache<T>
 				return false;
 			}
 			Key key = (Key) other;
-			return height == key.height && resource.equals(key.resource);
+			return height == key.height && modelId.equals(key.modelId);
 		}
 
 		@Override
 		public int hashCode()
 		{
-			return 31 * resource.hashCode() + height;
+			return 31 * modelId.hashCode() + height;
 		}
 	}
 }

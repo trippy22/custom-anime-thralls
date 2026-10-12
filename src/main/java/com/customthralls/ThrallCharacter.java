@@ -173,12 +173,11 @@ public enum ThrallCharacter
 	ZORO_MIST("zoro_mist");
 	// END GENERATED PIXEL CHARACTERS
 
-	private final String resourceName;
+	private final String modelName;
 
-	String getModelResource(RenderStyle style)
+	String getModelId(RenderStyle style)
 	{
-		return resourceName == null ? null : "pixels/" + resourceName
-			+ "_" + style.getResourceSuffix() + ".json";
+		return modelName == null ? null : modelName + "_" + style.getModelSuffix();
 	}
 
 	@Override
@@ -188,7 +187,7 @@ public enum ThrallCharacter
 		{
 			return "Original game thrall";
 		}
-		String[] words = resourceName.replace("allmight", "all_might")
+		String[] words = modelName.replace("allmight", "all_might")
 			.replace("megax", "mega_x").replace("megay", "mega_y").split("_");
 		StringBuilder label = new StringBuilder();
 		for (String word : words)

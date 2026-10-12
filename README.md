@@ -21,5 +21,7 @@ hopping rather than moving arms and legs.
 With Java 11+, run `./gradlew run` to launch RuneLite with the plugin.
 Use `./gradlew run --args="--preview"` to preview characters without summoning thralls.
 In IntelliJ, run `CustomThrallsPluginTest.main()` with `-ea` in VM options.
+Models are compiled from generated delta arrays; Gradle is configured with a 4 GiB
+build heap. In IntelliJ, use Gradle to build and run the project.
 
 Licensed under [BSD 2-Clause](LICENSE). Reused code is credited in [NOTICE](NOTICE).
